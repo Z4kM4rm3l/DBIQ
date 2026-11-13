@@ -1,5 +1,6 @@
 import { parse, type Node } from "libpg-query";
 import { describe, expect, it } from "vitest";
+import { dropTable } from "../src/rules/stubs.js";
 import { dropColumn } from "../src/rules/drop-column.js";
 
 /** Parse a single SQL statement into the AST node a rule receives. */
@@ -34,8 +35,18 @@ describe("drop-column", () => {
 
 // Your turn: write these by hand, following the drop-column tests above.
 describe("drop-table", () => {
-  it.todo("flags DROP TABLE");
-  it.todo("ignores DROP INDEX");
+it("flags DROP TABLE", async () => {
+  const v = dropTable.check(await stmt("DROP TABLE users"));
+  expect(v).toHaveLength(1);
+  expect(v[0]?.message).toContain('"users"');
+});
+
+it("flags every table in DROP TABLE a, b", async () => {
+  expect(dropTable.check(await stmt("DROP TABLE a, b"))).toHaveLength(2);
+});
+
+it("ignores DROP INDEX", async () => {
+  expect(dropTable.check(await stmt("DROP INDEX ix_users_email"))).toEqual([]);
 });
 
 describe("create-index-non-concurrent", () => {
