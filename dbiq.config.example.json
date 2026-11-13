@@ -1,0 +1,7 @@
+{
+  "rules": {
+    "set-not-null": "warning",
+    "rename": "off"
+  },
+  "ignoreTables": ["alembic_version"]
+}
