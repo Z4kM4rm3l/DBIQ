@@ -15,8 +15,25 @@ export const dropTable: Rule = {
   id: "drop-table",
   description: "Dropping a table is irreversible and breaks any code still using it.",
   defaultSeverity: "error",
-  // Hint: DropStmt with removeType "OBJECT_TABLE".
-  check: () => [],
+  check(stmt) {
+    if (!("DropStmt" in stmt)) return [];
+    const { removeType, objects = [] } = stmt.DropStmt;
+    if (removeType !== "OBJECT_TABLE") return [];
+
+    // Each object is a List of name parts: ["users"] or ["public", "users"].
+    return objects.map((obj) => {
+      const parts = "List" in obj ? (obj.List.items ?? []) : [];
+      const name = parts
+        .map((p) => ("String" in p ? (p.String.sval ?? "") : ""))
+        .filter((s) => s !== "")
+        .join(".");
+      return {
+        message:
+          `Dropping table "${name || "<unknown>"}". ` +
+          "Remove all code that uses the table and deploy first, then drop it in a later migration.",
+      };
+    });
+  },
 };
 
 export const createIndexNonConcurrent: Rule = {
